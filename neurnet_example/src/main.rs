@@ -1,7 +1,7 @@
 use neurnet::*;
 
 fn main() {
-    let mut nn = network::Network::new(
+    let mut nn = Network::new(
         vec![2, 2, 1],
         |x: f64| -> f64 { 1.0 / (1.0 + (-x).exp()) },
         (-2.0, 2.0),
@@ -14,7 +14,7 @@ fn main() {
         nn.pulse(input.clone())
     );
     let ranges: ((f64, f64), (f64, f64)) = ((-2.0, 2.0), (-5.0, 5.0));
-    for _ in 0..10000 {
+    for _ in 0..1000 {
         nn.randomize(ranges.0, ranges.1);
         println!(
             "\nNetwork Input: {:?}\nNetwork Output: {:?}",
@@ -34,4 +34,5 @@ fn main() {
             panic!("something is wrong!");
         }
     }
+    nn.test_fn();
 }

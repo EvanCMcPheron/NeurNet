@@ -1,9 +1,10 @@
+pub mod training;
 pub struct Network<F: Fn(f64) -> f64> {
     activation_fn: F,
     shape: Vec<usize>,
     layers: Vec<Layer>,
 }
-struct Layer {
+pub struct Layer {
     weights: Vec<Vec<f64>>, //[neuron in this layer] [connecting neuron in prev layer]
     biases: Vec<f64>,
 }
@@ -81,13 +82,13 @@ impl<F: Fn(f64) -> f64> Network<F> {
 }
 
 impl Layer {
-    fn new(layer_size: usize, prev_layer_size: usize) -> Layer {
+    pub fn new(layer_size: usize, prev_layer_size: usize) -> Layer {
         Layer {
             weights: vec![vec![1.0; prev_layer_size]; layer_size],
             biases: vec![0.0; layer_size],
         }
     }
-    fn pulse<F: Fn(f64) -> f64>(&self, input: Vec<f64>, network: &Network<F>) -> Vec<f64> {
+    pub fn pulse<F: Fn(f64) -> f64>(&self, input: Vec<f64>, network: &Network<F>) -> Vec<f64> {
         let mut output_buf: Vec<f64> = vec![];
         for neuron_indx in 0..self.biases.len() {
             //For every neuron in layer
@@ -106,7 +107,7 @@ impl Layer {
         }
         output_buf
     }
-    fn set_weight(&mut self, neuron: usize, prev_layer_neuron: usize, weight: f64) {
+    pub fn set_weight(&mut self, neuron: usize, prev_layer_neuron: usize, weight: f64) {
         *(self
             .weights
             .get_mut(neuron)
@@ -114,16 +115,16 @@ impl Layer {
             .get_mut(prev_layer_neuron)
             .expect("A viable ID to a neuron in the previous layer")) = weight;
     }
-    fn get_weight(&self, neuron: usize, prev_layer_neuron: usize) -> Option<&f64> {
+    pub fn get_weight(&self, neuron: usize, prev_layer_neuron: usize) -> Option<&f64> {
         Some(self.weights.get(neuron)?.get(prev_layer_neuron)?)
     }
-    fn set_bias(&mut self, neuron: usize, bias: f64) {
+    pub fn set_bias(&mut self, neuron: usize, bias: f64) {
         *(self.biases.get_mut(neuron).expect("A valid neuron ID")) = bias;
     }
-    fn get_bias(&self, neuron: usize) -> Option<&f64> {
+    pub fn get_bias(&self, neuron: usize) -> Option<&f64> {
         Some(self.biases.get(neuron)?)
     }
-    fn randomize(&mut self, weights_range: (f64, f64), biases_range: (f64, f64)) {
+    pub fn randomize(&mut self, weights_range: (f64, f64), biases_range: (f64, f64)) {
         fn rand_float(range: (f64, f64)) -> f64 {
             use rand::random;
             let mut buf: f64 = random();
