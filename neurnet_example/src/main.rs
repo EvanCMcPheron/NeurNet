@@ -2,38 +2,26 @@ use neurnet::*;
 
 fn main() {
     let mut nn = Network::new(
-        vec![2, 2, 1],
+        vec![1, 2, 1],
         |x| if x > 0.0 {x} else {0.01 * x},
         Some(|x| if x > 0.0 {1.0} else {0.01}),
         (-2.0, 2.0),
         (-5.0, 5.0),
     );
-    let input = vec![1.0, 1.0];
-    println!(
-        "Network Input: {:?}\nNetwork Output: {:?}",
-        &input,
-        nn.pulse(input.clone())
-    );
-    let ranges: ((f64, f64), (f64, f64)) = ((-2.0, 2.0), (-5.0, 5.0));
-    for _ in 0..1000 {
-        nn.randomize(ranges.0, ranges.1);
-        println!(
-            "\nNetwork Input: {:?}\nNetwork Output: {:?}",
-            &input,
-            nn.pulse(input.clone())
-        );
-        let check: (f64, f64) = (
-            *nn.get_weight(0, 0, 0).unwrap(),
-            *nn.get_bias(0, 0).unwrap(),
-        );
-        println!("Some weight: {}\nSome Bias: {}", check.0, check.1,);
-        if check.0 < ranges.0 .0
-            || check.0 > ranges.0 .1
-            || check.1 < ranges.1 .0
-            || check.1 > ranges.1 .1
-        {
-            panic!("something is wrong!");
+    let training_inputs = {
+        let mut buf: Vec<Vec<f64>> = vec![];
+        for i in -100..=100 {
+            buf.push(vec![i as f64])
         }
-    }
-    println!("Activation Derivative: {}", nn.get_activation_der(1.0));
+        buf
+    };
+    let testing_inputs = {
+        let mut buf: Vec<Vec<f64>> = vec![];
+        for i in -100..=100 {
+            buf.push(vec![(i as f64) + 0.5])
+        }
+        buf
+    };
+    let ds = DataSet::gen_from_fn(|x| vec![0.5 * x[0]], training_inputs, testing_inputs);
+    println!("{:?}", nn.test_training_set(ds));
 }
