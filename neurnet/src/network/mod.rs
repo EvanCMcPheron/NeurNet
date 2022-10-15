@@ -11,10 +11,10 @@ pub struct Layer {
 }
 
 impl Network {
-    pub fn new(
+    pub fn new<AF: Fn(f64) -> f64 + 'static, AD: Fn(f64) -> f64 + 'static>(
         shape: Vec<usize>,
-        activation_fn: Box<dyn Fn(f64) -> f64>,
-        activation_der: Option<Box<dyn Fn(f64) -> f64>>,
+        activation_fn: AF,
+        activation_der: Option<AD>,
         weights_range: (f64, f64),
         biases_range: (f64, f64),
     ) -> Network {
@@ -28,8 +28,8 @@ impl Network {
             })
         }
         Network {
-            activation_fn,
-            activation_der,
+            activation_fn: Box::new(activation_fn),
+            activation_der: {if let Some(func) = activation_der {Some(Box::new(func))} else {None}},
             shape,
             layers,
         }

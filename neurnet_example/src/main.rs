@@ -3,8 +3,8 @@ use neurnet::*;
 fn main() {
     let mut nn = Network::new(
         vec![2, 2, 1],
-        Box::new(|x| if x > 0.0 {x} else {0.01 * x}),
-        Some(Box::new(|x| if x > 0.0 {1.0} else {0.01})),
+        |x| if x > 0.0 {x} else {0.01 * x},
+        Some(|x| if x > 0.0 {1.0} else {0.01}),
         (-2.0, 2.0),
         (-5.0, 5.0),
     );
