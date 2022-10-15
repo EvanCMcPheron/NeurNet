@@ -3,7 +3,8 @@ use neurnet::*;
 fn main() {
     let mut nn = Network::new(
         vec![2, 2, 1],
-        |x: f64| -> f64 { 1.0 / (1.0 + (-x).exp()) },
+        Box::new(|x| if x > 0.0 {x} else {0.01 * x}),
+        Some(Box::new(|x| if x > 0.0 {1.0} else {0.01})),
         (-2.0, 2.0),
         (-5.0, 5.0),
     );
@@ -34,5 +35,5 @@ fn main() {
             panic!("something is wrong!");
         }
     }
-    nn.test_fn();
+    println!("Activation Derivative: {}", nn.get_activation_der(1.0));
 }

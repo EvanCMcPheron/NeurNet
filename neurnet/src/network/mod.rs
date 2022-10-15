@@ -1,6 +1,7 @@
 pub mod training;
-pub struct Network<F: Fn(f64) -> f64> {
-    activation_fn: F,
+pub struct Network {
+    activation_fn: Box<dyn Fn(f64) -> f64>,
+    activation_der: Option<Box<dyn Fn(f64) -> f64>>,
     shape: Vec<usize>,
     layers: Vec<Layer>,
 }
@@ -9,13 +10,14 @@ pub struct Layer {
     biases: Vec<f64>,
 }
 
-impl<F: Fn(f64) -> f64> Network<F> {
+impl Network {
     pub fn new(
         shape: Vec<usize>,
-        activation_fn: F,
+        activation_fn: Box<dyn Fn(f64) -> f64>,
+        activation_der: Option<Box<dyn Fn(f64) -> f64>>,
         weights_range: (f64, f64),
         biases_range: (f64, f64),
-    ) -> Network<F> {
+    ) -> Network {
         let mut layers: Vec<Layer> = vec![];
         for i in 1..shape.len() {
             //1..shape.len() bcs the input layer shouldn't be an actual layer
@@ -27,6 +29,7 @@ impl<F: Fn(f64) -> f64> Network<F> {
         }
         Network {
             activation_fn,
+            activation_der,
             shape,
             layers,
         }
@@ -37,7 +40,7 @@ impl<F: Fn(f64) -> f64> Network<F> {
         }
         let mut layer_output = input;
         for layer in self.layers.iter() {
-            layer_output = layer.pulse(layer_output, self);
+            layer_output = layer.pulse(layer_output, &self.activation_fn);
         }
         layer_output
     }
@@ -88,11 +91,11 @@ impl Layer {
             biases: vec![0.0; layer_size],
         }
     }
-    pub fn pulse<F: Fn(f64) -> f64>(&self, input: Vec<f64>, network: &Network<F>) -> Vec<f64> {
+    pub fn pulse(&self, input: Vec<f64>, activation_fn: &Box<dyn Fn(f64) -> f64>) -> Vec<f64> {
         let mut output_buf: Vec<f64> = vec![];
         for neuron_indx in 0..self.biases.len() {
             //For every neuron in layer
-            output_buf.push((network.activation_fn)(
+            output_buf.push((activation_fn)(
                 {
                     //Sum the weighted inputs
                     let mut sum: f64 = 0.0;

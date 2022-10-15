@@ -1,6 +1,12 @@
 use super::{Layer, Network};
-impl<F: Fn(f64) -> f64> Network<F> {
-    pub fn test_fn(&self) {
-        println!("Functional!");
+impl Network {
+    pub fn get_activation_der(&self, x: f64) -> f64 {
+        let h = 0.0001;
+        match &self.activation_der {
+            Some(derivative) => derivative(x),
+            None => {
+                ( (self.activation_fn)(x + h/2.0) - (self.activation_fn)(x - h/2.0) ) / h
+            }
+        }
     }
 }
