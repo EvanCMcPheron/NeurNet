@@ -2,7 +2,7 @@ use neurnet::*;
 
 fn main() {
     let mut nn = Network::new(
-        vec![1, 2, 1],
+        vec![1, 5, 3, 6, 1],
         |x| if x > 0.0 {x} else {0.01 * x},
         Some(|x| if x > 0.0 {1.0} else {0.01}),
         (-2.0, 2.0),

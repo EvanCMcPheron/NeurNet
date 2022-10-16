@@ -27,7 +27,7 @@ impl Network {
         cost_vec
     }
     pub fn test_training_set(&self, food: impl NetworkFood) -> Vec<f64> {
-        //! Takes a dataset, runs through the engire set of training data and returns the average cost for each neuron.
+        //! Takes a dataset, runs through the entire set of training data, and returns the average cost for each neuron.
         let training_data = food.grab_testing_data();
         let mut cost_totals: Vec<f64> = vec![0.0; *self.shape.last().unwrap()];
         for data_pnt_i in 0..training_data.len() {
