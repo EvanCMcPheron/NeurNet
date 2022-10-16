@@ -29,7 +29,13 @@ impl Network {
         }
         Network {
             activation_fn: Box::new(activation_fn),
-            activation_der: {if let Some(func) = activation_der {Some(Box::new(func))} else {None}},
+            activation_der: {
+                if let Some(func) = activation_der {
+                    Some(Box::new(func))
+                } else {
+                    None
+                }
+            },
             shape,
             layers,
         }
@@ -76,6 +82,12 @@ impl Network {
     }
     pub fn get_bias(&self, layer: usize, neuron: usize) -> Option<&f64> {
         self.layers.get(layer)?.get_bias(neuron)
+    }
+    pub fn get_shape(&self) -> &Vec<usize> {
+        &self.shape
+    }
+    pub fn get_layers(&self) -> &Vec<Layer> {
+        &self.layers
     }
     pub fn randomize(&mut self, weights_range: (f64, f64), biases_range: (f64, f64)) {
         for layer in self.layers.iter_mut() {
@@ -143,5 +155,11 @@ impl Layer {
         for bias in self.biases.iter_mut() {
             *bias = rand_float(biases_range);
         }
+    }
+    pub fn len(&self) -> usize {
+        self.biases.len()
+    }
+    pub fn prev_layer_len(&self) -> usize {
+        self.weights.get(0).unwrap().len()
     }
 }
