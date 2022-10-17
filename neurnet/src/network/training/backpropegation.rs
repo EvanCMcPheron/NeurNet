@@ -39,7 +39,7 @@ impl Network {
         }
         cost_totals
     }
-    pub fn train(&mut self, food: &impl NetworkFood, rate: f64) {
+    pub fn train(&mut self, food: &impl NetworkFood, rate: f64, data_section: usize) {
         fn average_vec(vec: &Vec<f64>) -> f64 {
             let mut buf = 0.0;
             for i in vec.iter() {
@@ -49,37 +49,46 @@ impl Network {
         }
         let training_data = food.grab_training_data();
         for data_pnt in training_data.iter() {
-            let mut initial_cost = self.test_point(&data_pnt);
-            let mut initial_avg = average_vec(&initial_cost);
-            for layer in 0..(self.shape.len() - 1) {
-                //-1 as to ignore the input layer
-                for neuron_in_layer in 0..self.shape[layer + 1] {
-                    //Offset by one to make up for the fact that the shape includes the input layer
-                    for neuron_in_prev_layer in 0..self.shape[layer] {
-                        let current_weight = self
-                            .get_weight(layer, neuron_in_layer, neuron_in_prev_layer)
-                            .unwrap().clone();
-                        self.set_weight(
-                            layer,
-                            neuron_in_layer,
-                            neuron_in_prev_layer,
-                            current_weight + rate,
-                        );
+            let random: usize = rand::random();
+            if random % data_section == 0 {
+                let mut initial_cost = self.test_point(&data_pnt);
+                let mut initial_avg = average_vec(&initial_cost);
+                for layer in 0..(self.shape.len() - 1) {
+                    //-1 as to ignore the input layer
+                    for neuron_in_layer in 0..self.shape[layer + 1] {
+                        //Offset by one to make up for the fact that the shape includes the input layer
+                        for neuron_in_prev_layer in 0..self.shape[layer] {
+                            let current_weight = self
+                                .get_weight(layer, neuron_in_layer, neuron_in_prev_layer)
+                                .unwrap()
+                                .clone();
+                            self.set_weight(
+                                layer,
+                                neuron_in_layer,
+                                neuron_in_prev_layer,
+                                current_weight + rate,
+                            );
+                            let new_cost = self.test_point(data_pnt);
+                            let new_avg = average_vec(&new_cost);
+                            let der = new_avg - initial_avg; //Positive means increasing weight is bad
+                            self.set_weight(
+                                layer,
+                                neuron_in_layer,
+                                neuron_in_prev_layer,
+                                current_weight - der * rate,
+                            );
+                            initial_cost = self.test_point(data_pnt);
+                            initial_avg = average_vec(&initial_cost);
+                        }
+                        let current_bias = self.get_bias(layer, neuron_in_layer).unwrap().clone();
+                        self.set_bias(layer, neuron_in_layer, current_bias + rate);
                         let new_cost = self.test_point(data_pnt);
                         let new_avg = average_vec(&new_cost);
                         let der = new_avg - initial_avg; //Positive means increasing weight is bad
-                        self.set_weight(layer, neuron_in_layer, neuron_in_prev_layer, current_weight - der * rate);
+                        self.set_bias(layer, neuron_in_layer, current_bias - der * rate);
                         initial_cost = self.test_point(data_pnt);
                         initial_avg = average_vec(&initial_cost);
                     }
-                    let current_bias = self.get_bias(layer, neuron_in_layer).unwrap().clone();
-                    self.set_bias(layer, neuron_in_layer, current_bias + rate);
-                    let new_cost = self.test_point(data_pnt);
-                    let new_avg = average_vec(&new_cost);
-                    let der = new_avg - initial_avg; //Positive means increasing weight is bad
-                    self.set_bias(layer, neuron_in_layer, current_bias - der * rate);
-                    initial_cost = self.test_point(data_pnt);
-                    initial_avg = average_vec(&initial_cost);
                 }
             }
         }
