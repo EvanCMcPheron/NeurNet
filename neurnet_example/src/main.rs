@@ -1,5 +1,3 @@
- use std::io::Read;
-
 use neurnet::*;
 
 fn main() {
@@ -42,6 +40,16 @@ fn main() {
         println!("({}, {:?})", i, nn.pulse(vec![i as f64]));
     }
     let mut buf = String::new();
-    println!("Press enter to exit...");
+    nn.save("test01.neur").unwrap();
+    println!("Press enter to load and test test01.neur...");
     std::io::stdin().read_line(&mut buf).unwrap();
+  
+    let lnn = Network::load(
+        "test01.neur",
+        |x| if x > 0.0 { x } else { 0.01 * x },
+        Some(|x| if x > 0.0 { 1.0 } else { 0.01 }),
+    ).unwrap();
+    for i in -100..=100 {
+        println!("({}, {:?})", i, lnn.pulse(vec![i as f64]));
+    }
 }
