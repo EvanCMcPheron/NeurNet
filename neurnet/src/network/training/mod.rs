@@ -1,3 +1,3 @@
 pub use super::{Layer, Network};
-mod backpropegation;
+mod gradient_decent;
 pub mod data;

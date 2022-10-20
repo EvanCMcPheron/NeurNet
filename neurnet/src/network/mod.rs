@@ -41,37 +41,70 @@ impl Network {
             layers,
         }
     }
+    pub fn save_safe(&self, name: &str) {
+        match self.save(&{ let mut string = String::from(name); string.push_str(".neur"); string }) {
+            Some(_) => (),
+            None => {
+                let mut i: usize = 0;
+                loop {
+                    match self
+                        .save(&{ let mut string = String::from(name); string.push_str(&i.to_string()); string.push_str(".neur"); string })
+                    {
+                        Some(_) => break,
+                        None => (),
+                    }
+                    i += 1;
+                }
+            }
+        }
+    }
     pub fn save(&self, path: &str) -> Option<()> {
-        let mut data: (Vec<usize>, Vec<Vec<Vec<f64>>>, Vec<Vec<f64>>) = (self.get_shape().clone(), vec![], vec![]);
+        let mut data: (Vec<usize>, Vec<Vec<Vec<f64>>>, Vec<Vec<f64>>) =
+            (self.get_shape().clone(), vec![], vec![]);
         let mut layer_i = 0;
         for layer in self.layers.iter() {
             data.1.push(vec![]);
             data.2.push(vec![]);
             for neuron_i in 0..layer.len() {
-              data.1[layer_i].push(vec![]);
-              for prev_neuron_i in 0..layer.prev_layer_len() {
-                data.1[layer_i][neuron_i].push(*self.get_weight(layer_i, neuron_i, prev_neuron_i).unwrap());
-              }
-              data.2[layer_i].push(*self.get_bias(layer_i, neuron_i).unwrap());
+                data.1[layer_i].push(vec![]);
+                for prev_neuron_i in 0..layer.prev_layer_len() {
+                    data.1[layer_i][neuron_i]
+                        .push(*self.get_weight(layer_i, neuron_i, prev_neuron_i).unwrap());
+                }
+                data.2[layer_i].push(*self.get_bias(layer_i, neuron_i).unwrap());
             }
-          layer_i += 1;
+            layer_i += 1;
         }
         write_neur_file(path, data)
     }
-    pub fn load<AF: Fn(f64) -> f64 + 'static, AD: Fn(f64) -> f64 + 'static>(path: &str, activation_fn: AF, activation_der: Option<AD>,) -> Option<Network> {
-      let data = parse_neur_file(path)?;
-      let mut network = Network::new(data.0.clone(), activation_fn, activation_der, (0.0,0.0), (0.0, 0.0));
-      let mut layer_i = 0;
-      for layer in network.get_layers_mut().iter_mut() {
-        for neuron_i in 0..layer.len() {
-          for prev_neuron_i in 0..layer.prev_layer_len() {
-            layer.set_weight(neuron_i, prev_neuron_i, data.1[layer_i][neuron_i][prev_neuron_i]);
-          }
-          layer.set_bias(neuron_i, data.2[layer_i][neuron_i]);
+    pub fn load<AF: Fn(f64) -> f64 + 'static, AD: Fn(f64) -> f64 + 'static>(
+        path: &str,
+        activation_fn: AF,
+        activation_der: Option<AD>,
+    ) -> Option<Network> {
+        let data = parse_neur_file(path)?;
+        let mut network = Network::new(
+            data.0.clone(),
+            activation_fn,
+            activation_der,
+            (0.0, 0.0),
+            (0.0, 0.0),
+        );
+        let mut layer_i = 0;
+        for layer in network.get_layers_mut().iter_mut() {
+            for neuron_i in 0..layer.len() {
+                for prev_neuron_i in 0..layer.prev_layer_len() {
+                    layer.set_weight(
+                        neuron_i,
+                        prev_neuron_i,
+                        data.1[layer_i][neuron_i][prev_neuron_i],
+                    );
+                }
+                layer.set_bias(neuron_i, data.2[layer_i][neuron_i]);
+            }
+            layer_i += 1;
         }
-        layer_i += 1;
-      }
-      Some(network)
+        Some(network)
     }
     pub fn pulse(&self, input: Vec<f64>) -> Vec<f64> {
         if input.len() < self.shape[0] {

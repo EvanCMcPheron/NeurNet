@@ -32,23 +32,21 @@ fn main() {
     );
     println!("Training...");
     println!("{:?}", nn.test(&ds));
-    for i in 0..500 {
-        nn.train(&ds, rate, 2);
-        println!("{}: {:?}", i, nn.test(&ds));
-    }
+    nn.train_loop(&ds, rate, 0.3, 500, Some(10));
     for i in -100..=100 {
         println!("({}, {:?})", i, nn.pulse(vec![i as f64]));
     }
     let mut buf = String::new();
-    nn.save("test01.neur").unwrap();
+    nn.save_safe("test");
     println!("Press enter to load and test test01.neur...");
     std::io::stdin().read_line(&mut buf).unwrap();
-  
+
     let lnn = Network::load(
         "test01.neur",
         |x| if x > 0.0 { x } else { 0.01 * x },
         Some(|x| if x > 0.0 { 1.0 } else { 0.01 }),
-    ).unwrap();
+    )
+    .unwrap();
     for i in -100..=100 {
         println!("({}, {:?})", i, lnn.pulse(vec![i as f64]));
     }
