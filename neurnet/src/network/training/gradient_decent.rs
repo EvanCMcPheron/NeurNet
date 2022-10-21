@@ -1,14 +1,11 @@
 use crate::NetworkFood;
 
-use super::{Layer, Network};
+use super::Network;
 impl Network {
     pub fn get_activation_der(&self, x: f64) -> f64 {
         //! Gets the derivative of the activation function at the given point **x**.
         let h = 0.0001;
-        match &self.activation_der {
-            Some(derivative) => derivative(x),
-            None => ((self.activation_fn)(x + h / 2.0) - (self.activation_fn)(x - h / 2.0)) / h,
-        }
+        ((self.activation_fn)(x + h / 2.0) - (self.activation_fn)(x - h / 2.0)) / h
     }
     pub fn test_point(&self, point: &(Vec<f64>, Vec<f64>)) -> Vec<f64> {
         //! Takes a data point (input values, output values) and returns the costs of each individual output neuron for that given point.
@@ -39,15 +36,29 @@ impl Network {
         }
         cost_totals
     }
-    pub fn train_loop(&mut self, food: &impl NetworkFood, rate: f64, used_data_fraction: f64, iterations: usize, generations_per_cost_print: Option<usize>) {
-      for i in 0..iterations {
-        self.train(food, rate, used_data_fraction);
-        if let Some(gens) = generations_per_cost_print {
-          if i%gens == 0 {
-            println!("Generation {i}: {:?}", self.test(food));
-          }
+    pub fn train_loop(
+        &mut self,
+        food: &impl NetworkFood,
+        rate: f64,
+        used_data_fraction: f64,
+        iterations: usize,
+        generations_per_cost_print: Option<usize>,
+    ) {
+        if let Some(_) = generations_per_cost_print {
+            println!("Initial Cost Vector: {:?}", self.test(food));
         }
-      }
+        for i in 0..iterations {
+            self.train(food, rate, used_data_fraction);
+            if let Some(gens) = generations_per_cost_print {
+                if i % gens == 0 {
+                    let test_results = self.test(food);
+                    if test_results[0] == f64::NAN {
+                        self.randomize((-2.0, 2.0), (-5.0, 5.0))
+                    }
+                    println!("Generation {i}: {:?}", test_results);
+                }
+            }
+        }
     }
     pub fn train(&mut self, food: &impl NetworkFood, rate: f64, used_data_fraction: f64) {
         let training_data = food.grab_training_data();
@@ -55,7 +66,9 @@ impl Network {
             let random: f64 = rand::random();
             if random < used_data_fraction {
                 let mut initial_cost = self.test_point(&data_pnt);
-                if initial_cost[0] == f64::NAN {self.randomize((-2.0, 2.0), (-5.0, 5.0));}  //You only have to check the first output b/c if one output is nan then all will be.
+                if initial_cost[0] == f64::NAN {
+                    self.randomize((-2.0, 2.0), (-5.0, 5.0));
+                } //You only have to check the first output b/c if one output is nan then all will be.
                 for output_i in 0..(*self.shape.last().unwrap()) {
                     for layer in 0..(self.shape.len() - 1) {
                         //-1 as to ignore the input layer
@@ -72,7 +85,7 @@ impl Network {
                                     neuron_in_prev_layer,
                                     current_weight + rate,
                                 );
-                                let new_cost = self.test_point(data_pnt);  //Can potentially be eliminated by backwards propegation
+                                let new_cost = self.test_point(data_pnt); //Can potentially be eliminated by backwards propegation
                                 let der = new_cost[output_i] - initial_cost[output_i]; //Positive means increasing weight is bad
                                 self.set_weight(
                                     layer,

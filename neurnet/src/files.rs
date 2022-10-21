@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{Read, Write};
 
-pub fn read_file(path: &str) -> Option<String> {
+fn read_file(path: &str) -> Option<String> {
     let mut input = match File::open(path) {
         Ok(input) => input,
         Err(_) => {
@@ -17,7 +17,7 @@ pub fn read_file(path: &str) -> Option<String> {
     Some(buf)
 }
 
-pub fn write_file(path: &str, contents: &str) -> Option<()> {
+fn write_file(path: &str, contents: &str) -> Option<()> {
     let mut file = match File::open(&path) {
         Ok(file) => file,
         Err(_) => match File::create(&path) {
@@ -35,7 +35,7 @@ pub fn write_file(path: &str, contents: &str) -> Option<()> {
 pub fn parse_neur_file(path: &str) -> Option<(Vec<usize>, Vec<Vec<Vec<f64>>>, Vec<Vec<f64>>)> {
     let data: String = read_file(path)?;
     fn rm_whitespace(x: String) -> String {
-        let mut chars = x.chars();
+        let chars = x.chars();
         let mut buf = String::new();
         for char in chars {
             if char != ' ' && char != '\n' {

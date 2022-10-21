@@ -2,7 +2,6 @@ use super::files::{parse_neur_file, write_neur_file};
 pub mod training;
 pub struct Network {
     activation_fn: Box<dyn Fn(f64) -> f64>,
-    activation_der: Option<Box<dyn Fn(f64) -> f64>>,
     shape: Vec<usize>,
     layers: Vec<Layer>,
 }
@@ -12,10 +11,9 @@ pub struct Layer {
 }
 
 impl Network {
-    pub fn new<AF: Fn(f64) -> f64 + 'static, AD: Fn(f64) -> f64 + 'static>(
+    pub fn new<AF: Fn(f64) -> f64 + 'static>(
         shape: Vec<usize>,
         activation_fn: AF,
-        activation_der: Option<AD>,
         weights_range: (f64, f64),
         biases_range: (f64, f64),
     ) -> Network {
@@ -30,18 +28,25 @@ impl Network {
         }
         Network {
             activation_fn: Box::new(activation_fn),
-            activation_der: {
-                if let Some(func) = activation_der {
-                    Some(Box::new(func))
-                } else {
-                    None
-                }
-            },
             shape,
             layers,
         }
     }
     pub fn save_safe(&self, name: &str) {
+      //! ```
+      //! let network1 = Network::new(
+      //!   vec![1, 2, 1],
+      //!   |x| if x > 0.0 { x } else { 0.01 * x },
+      //!   (-2.0, 2.0),
+      //!   (-5.0, 5.0),
+      //! );
+      //! network1.save_safe(&"network");
+      //! let network2 = Network::load(
+      //!   &"network.neur",
+      //!   |x| if x > 0.0 { x } else { 0.01 * x },
+      //! ).unwrap();
+      //! 
+      //! ```
         match self.save(&{ let mut string = String::from(name); string.push_str(".neur"); string }) {
             Some(_) => (),
             None => {
@@ -77,16 +82,14 @@ impl Network {
         }
         write_neur_file(path, data)
     }
-    pub fn load<AF: Fn(f64) -> f64 + 'static, AD: Fn(f64) -> f64 + 'static>(
+    pub fn load<AF: Fn(f64) -> f64 + 'static>(
         path: &str,
         activation_fn: AF,
-        activation_der: Option<AD>,
     ) -> Option<Network> {
         let data = parse_neur_file(path)?;
         let mut network = Network::new(
             data.0.clone(),
             activation_fn,
-            activation_der,
             (0.0, 0.0),
             (0.0, 0.0),
         );
