@@ -17,6 +17,15 @@ impl Network {
         weights_range: (f64, f64),
         biases_range: (f64, f64),
     ) -> Network {
+        //! Generates a new Neural Network. Shape defines the number of layers and the number of neurons in each layer. For example, if a network is defined to have a shape of [1, 2, 3], then the network will have one neuron in its first (input) layer, two neurons in its 2nd (hidden) layer, and three neurons in its 3rd (output) layer. The weight and bias ranges are the ranges in which the networks weights and ranges will be randomly generated upon initialization.
+        //! ```
+        //! let mut nn = Network::new(
+        //!     vec![1, 5, 4, 5, 4, 6, 2],
+        //!     |x| if x > 0.0 { x } else { 0.01 * x },
+        //!     (-2.0, 2.0),
+        //!     (-5.0, 5.0),
+        //! );
+        //! ```
         let mut layers: Vec<Layer> = vec![];
         for i in 1..shape.len() {
             //1..shape.len() bcs the input layer shouldn't be an actual layer
@@ -33,28 +42,31 @@ impl Network {
         }
     }
     pub fn save_safe(&self, name: &str) {
-      //! ```
-      //! let network1 = Network::new(
-      //!   vec![1, 2, 1],
-      //!   |x| if x > 0.0 { x } else { 0.01 * x },
-      //!   (-2.0, 2.0),
-      //!   (-5.0, 5.0),
-      //! );
-      //! network1.save_safe(&"network");
-      //! let network2 = Network::load(
-      //!   &"network.neur",
-      //!   |x| if x > 0.0 { x } else { 0.01 * x },
-      //! ).unwrap();
-      //! 
-      //! ```
-        match self.save(&{ let mut string = String::from(name); string.push_str(".neur"); string }) {
+        //! Saves a network as {name}.neur, except if the file already exists save_safe will keep adding on numbers to the file name until the network gets successfully saved.
+        //! ```
+        //! let network1 = Network::new(
+        //!   vec![1, 2, 1],
+        //!   |x| if x > 0.0 { x } else { 0.01 * x },
+        //!   (-2.0, 2.0),
+        //!   (-5.0, 5.0),
+        //! );
+        //! network1.save_safe(&"network");
+        //! ```
+        match self.save(&{
+            let mut string = String::from(name);
+            string.push_str(".neur");
+            string
+        }) {
             Some(_) => (),
             None => {
                 let mut i: usize = 0;
                 loop {
-                    match self
-                        .save(&{ let mut string = String::from(name); string.push_str(&i.to_string()); string.push_str(".neur"); string })
-                    {
+                    match self.save(&{
+                        let mut string = String::from(name);
+                        string.push_str(&i.to_string());
+                        string.push_str(".neur");
+                        string
+                    }) {
                         Some(_) => break,
                         None => (),
                     }
@@ -64,6 +76,16 @@ impl Network {
         }
     }
     pub fn save(&self, path: &str) -> Option<()> {
+        //! Saves the network to the path specified. Will return None if saving fails for any reason, including if the path specified already exists. It is recommended to use save_safe rather than save unless necessary.
+        //! ```
+        //! let network1 = Network::new(
+        //!   vec![1, 2, 1],
+        //!   |x| if x > 0.0 { x } else { 0.01 * x },
+        //!   (-2.0, 2.0),
+        //!   (-5.0, 5.0),
+        //! );
+        //! network1.save(&"network.neur");
+        //! ```
         let mut data: (Vec<usize>, Vec<Vec<Vec<f64>>>, Vec<Vec<f64>>) =
             (self.get_shape().clone(), vec![], vec![]);
         let mut layer_i = 0;
@@ -82,17 +104,24 @@ impl Network {
         }
         write_neur_file(path, data)
     }
-    pub fn load<AF: Fn(f64) -> f64 + 'static>(
-        path: &str,
-        activation_fn: AF,
-    ) -> Option<Network> {
+    pub fn load<AF: Fn(f64) -> f64 + 'static>(path: &str, activation_fn: AF) -> Option<Network> {
+        //! Loads a network from the path specified. Since the activation function isn't currently saved to file it has to be specified in the loading fn. Returns None if loading faild.
+        //! ```
+        //! let network1 = Network::new(
+        //!   vec![1, 2, 1],
+        //!   |x| if x > 0.0 { x } else { 0.01 * x },
+        //!   (-2.0, 2.0),
+        //!   (-5.0, 5.0),
+        //! );
+        //! network1.save_safe(&"network");
+        //! 
+        //! let network2 = Network::load(
+        //!   &"network.neur",
+        //!   |x| if x > 0.0 { x } else { 0.01 * x },
+        //! ).unwrap();
+        //! ```
         let data = parse_neur_file(path)?;
-        let mut network = Network::new(
-            data.0.clone(),
-            activation_fn,
-            (0.0, 0.0),
-            (0.0, 0.0),
-        );
+        let mut network = Network::new(data.0.clone(), activation_fn, (0.0, 0.0), (0.0, 0.0));
         let mut layer_i = 0;
         for layer in network.get_layers_mut().iter_mut() {
             for neuron_i in 0..layer.len() {
@@ -110,7 +139,21 @@ impl Network {
         Some(network)
     }
     pub fn pulse(&self, input: Vec<f64>) -> Vec<f64> {
-        if input.len() < self.shape[0] {
+        //! Is the function for running/passing data through a network. The input is a vector of all the floats to pass to the input neuron, and the output is the values of all the output neurons.
+        //! ```
+        //! let mut nn = Network::new(
+        //!     vec![1, 5, 4, 5, 4, 6, 2],
+        //!     |x| if x > 0.0 { x } else { 0.01 * x },
+        //!     (-2.0, 2.0),
+        //!     (-5.0, 5.0),
+        //! );
+        //! println!("{:?}", nn.pulse(vec![1.0]));
+        //! ```
+        //! # Panics
+        //! <ul>
+        //! <li> If the input vector's length is not equal to the amount of input neurons.
+        //! </ul>
+        if input.len() != self.shape[0] {
             panic!("Network was passed more inputs than there are neurons in the first layer of the network");
         }
         let mut layer_output = input;
@@ -126,7 +169,7 @@ impl Network {
         prev_layer_neuron: usize,
         weight: f64,
     ) {
-        //! Sets the weight of a neuron connection between a neuron in *layer* and a neuron in the previous layer. Note that the input layer isn't counted as a layer, so layer=0 would actually be accessing the second layer.
+        //! Sets the weight of a neuron connection between a neuron in layer and a neuron in the previous layer. Note that the input layer isn't counted as a layer, so layer 0 would actually be accessing the second layer.
         //! # Panics
         //! <ul>
         //! <li> Attempting to mutate the weight to or from a non-existant neuron.
@@ -147,6 +190,11 @@ impl Network {
             .get_weight(neuron, prev_layer_neuron)
     }
     pub fn set_bias(&mut self, layer: usize, neuron: usize, bias: f64) {
+        //! Sets the bias of a neuron in the specified layer. Note that the first layer is not included so layer 0 is actually the second layer.
+        //! # Panics
+        //! <ul>
+        //! <li> Attempting to mutate the bias to or from a non-existant neuron.
+        //! </ul>
         self.layers.get_mut(layer).unwrap().set_bias(neuron, bias);
     }
     pub fn get_bias(&self, layer: usize, neuron: usize) -> Option<&f64> {
@@ -162,6 +210,7 @@ impl Network {
         &mut self.layers
     }
     pub fn randomize(&mut self, weights_range: (f64, f64), biases_range: (f64, f64)) {
+        //! Randomizes the entire network.
         for layer in self.layers.iter_mut() {
             layer.randomize(weights_range, biases_range);
         }
