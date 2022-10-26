@@ -41,7 +41,7 @@ impl Network {
             layers,
         }
     }
-    pub fn save_safe(&self, name: &str) {
+    /*pub fn save_safe(&self, name: &str) {
         //! Saves a network as {name}.neur, except if the file already exists save_safe will keep adding on numbers to the file name until the network gets successfully saved.
         //! ```
         //! let network1 = Network::new(
@@ -74,9 +74,9 @@ impl Network {
                 }
             }
         }
-    }
+    }*/
     pub fn save(&self, path: &str) -> Option<()> {
-        //! Saves the network to the path specified. Will return None if saving fails for any reason, including if the path specified already exists. It is recommended to use save_safe rather than save unless necessary.
+        //! Saves the network to the path specified. Will return None if saving fails for any reason, including if the path specified already exists.
         //! ```
         //! let network1 = Network::new(
         //!   vec![1, 2, 1],
@@ -113,7 +113,7 @@ impl Network {
         //!   (-2.0, 2.0),
         //!   (-5.0, 5.0),
         //! );
-        //! network1.save_safe(&"network");
+        //! network1.save(&"network.neur");
         //!
         //! let network2 = Network::load(
         //!   &"network.neur",

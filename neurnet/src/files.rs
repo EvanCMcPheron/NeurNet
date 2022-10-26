@@ -1,8 +1,6 @@
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
-use crate::network::training;
-
 fn read_file(path: &str) -> Option<String> {
     let mut input = match File::open(path) {
         Ok(input) => input,
@@ -37,7 +35,7 @@ fn read_file_bytes(path: &str) -> Option<Vec<u8>> {
 }
 
 fn write_file(path: &str, contents: &str) -> Option<()> {
-    let mut file = match File::open(&path) {
+    let mut file = match OpenOptions::new().write(true).open(path) {
         Ok(file) => file,
         Err(_) => match File::create(&path) {
             Ok(file) => file,
@@ -52,7 +50,7 @@ fn write_file(path: &str, contents: &str) -> Option<()> {
 }
 
 fn write_file_bytes(path: &str, contents: Vec<u8>) -> Option<()> {
-    let mut file = match File::open(&path) {
+    let mut file = match OpenOptions::new().write(true).open(path) {
         Ok(file) => file,
         Err(_) => match File::create(&path) {
             Ok(file) => file,
