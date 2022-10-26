@@ -1,3 +1,4 @@
+use super::super::super::files::{read_dset_file, write_dset_file};
 /// The trait used for structs that can be fed to network training methods.
 pub trait NetworkFood {
     /// Method for getting a set of data points (inputs, expected outputs) for the training dataset
@@ -36,6 +37,28 @@ impl DataSet {
             training_data: vec![],
             testing_data: vec![],
         }
+    }
+    pub fn save(&self, path: &str) -> Option<()> {
+        let training_count: u32 = self.training_data.len() as u32;
+        let testing_count: u32 = self.testing_data.len() as u32;
+
+        write_dset_file(
+            path,
+            training_count,
+            testing_count,
+            self.training_data[0].0.len() as u32,
+            self.training_data[0].1.len() as u32,
+            self.training_data.clone(),
+            self.testing_data.clone(),
+        )?;
+
+        Some(())
+    }
+    pub fn load(path: &str) -> Option<DataSet> {
+        let data = read_dset_file(path)?;
+        Some(
+            DataSet { training_data: data.0, testing_data: data.1 }
+        )
     }
     pub fn push_training_point(&mut self, data_point: (Vec<f64>, Vec<f64>)) {
         //! Adds a data point to the training dataset

@@ -114,7 +114,7 @@ impl Network {
         //!   (-5.0, 5.0),
         //! );
         //! network1.save_safe(&"network");
-        //! 
+        //!
         //! let network2 = Network::load(
         //!   &"network.neur",
         //!   |x| if x > 0.0 { x } else { 0.01 * x },

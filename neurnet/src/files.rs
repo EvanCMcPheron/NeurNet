@@ -1,5 +1,7 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+
+use crate::network::training;
 
 fn read_file(path: &str) -> Option<String> {
     let mut input = match File::open(path) {
@@ -17,6 +19,23 @@ fn read_file(path: &str) -> Option<String> {
     Some(buf)
 }
 
+fn read_file_bytes(path: &str) -> Option<Vec<u8>> {
+    let mut input = match File::open(path) {
+        Ok(input) => input,
+        Err(_) => {
+            println!("Invalid File Path");
+            return None;
+        }
+    };
+    let mut buf = vec![];
+    if let Err(_) = input.read_to_end(&mut buf) {
+        println!("Could not read file");
+        return None;
+    }
+    
+    Some(buf)
+}
+
 fn write_file(path: &str, contents: &str) -> Option<()> {
     let mut file = match File::open(&path) {
         Ok(file) => file,
@@ -30,6 +49,104 @@ fn write_file(path: &str, contents: &str) -> Option<()> {
         Ok(_) => Some(()),
         Err(_) => None,
     }
+}
+
+fn write_file_bytes(path: &str, contents: Vec<u8>) -> Option<()> {
+    let mut file = match File::open(&path) {
+        Ok(file) => file,
+        Err(_) => match File::create(&path) {
+            Ok(file) => file,
+            Err(_) => return None,
+        },
+    };
+    let data: Box<[u8]> = contents.iter().map(|x| *x).collect();
+    match file.write_all(&data) {
+        Ok(_) => Some(()),
+        Err(_) => None,
+    }
+}
+
+pub fn write_dset_file(
+    path: &str,
+    training_count: u32,
+    testing_count: u32,
+    input_size: u32,
+    output_size: u32,
+    training_points: Vec<(Vec<f64>, Vec<f64>)>,
+    testing_points: Vec<(Vec<f64>, Vec<f64>)>,
+) -> Option<()> {
+    let mut file_buf: Vec<u8> = vec![];
+    file_buf.extend_from_slice(&training_count.to_be_bytes());
+    file_buf.extend_from_slice(&testing_count.to_be_bytes());
+    file_buf.extend_from_slice(&input_size.to_be_bytes());
+    file_buf.extend_from_slice(&output_size.to_be_bytes());
+
+    for data_point in training_points {
+        for input in data_point.0 {
+            file_buf.extend_from_slice(&input.to_be_bytes());
+        }
+        for output in data_point.1 {
+            file_buf.extend_from_slice(&output.to_be_bytes());
+        }
+    }
+    for data_point in testing_points {
+        for input in data_point.0 {
+            file_buf.extend_from_slice(&input.to_be_bytes());
+        }
+        for output in data_point.1 {
+            file_buf.extend_from_slice(&output.to_be_bytes());
+        }
+    }
+
+    write_file_bytes(path, file_buf)?;
+    Some(())
+}
+
+pub fn read_dset_file(path: &str) -> Option<(Vec<(Vec<f64>, Vec<f64>)>, Vec<(Vec<f64>, Vec<f64>)>)> {
+    fn grab_u32(data: &mut Vec<u8>) -> u32 {
+        let mut buf: [u8; 4] = [0; 4];
+        for i in 0..4 {
+            buf[i] = data.remove(0);
+        }
+        u32::from_be_bytes(buf)
+    }
+    fn grab_f64(data: &mut Vec<u8>) -> f64 {
+        let mut buf: [u8; 8] = [0; 8];
+        for i in 0..8 {
+            buf[i] = data.remove(0);
+        }
+        f64::from_be_bytes(buf)
+    }
+    
+    let mut data = read_file_bytes(path)?;
+
+    let training_count = grab_u32(&mut data);
+    let testing_count = grab_u32(&mut data);
+    let input_size = grab_u32(&mut data);
+    let output_size = grab_u32(&mut data);
+
+    let mut buf = (vec![], vec![]);
+
+    for training_pnt in 0..training_count {
+        buf.0.push((vec![], vec![]));
+        for input in 0..input_size {
+            buf.0[training_pnt as usize].0.push(grab_f64(&mut data));
+        }
+        for output in 0..output_size {
+            buf.0[training_pnt as usize].1.push(grab_f64(&mut data));
+        }
+    }
+    for testing_pnt in 0..testing_count {
+        buf.1.push((vec![], vec![]));
+        for input in 0..input_size {
+            buf.1[testing_pnt as usize].0.push(grab_f64(&mut data));
+        }
+        for output in 0..output_size {
+            buf.1[testing_pnt as usize].1.push(grab_f64(&mut data));
+        }
+    }
+
+    Some(buf)
 }
 
 pub fn parse_neur_file(path: &str) -> Option<(Vec<usize>, Vec<Vec<Vec<f64>>>, Vec<Vec<f64>>)> {

@@ -43,10 +43,10 @@ impl Network {
         iterations: usize,
         iteration_per_cost_print: Option<usize>,
     ) {
-        //! The method to use for training a network using gradient descent. 
+        //! The method to use for training a network using gradient descent.
         //! <ul>
-        //! <li> Food is the dataset that will be used to train the network. 
-        //! <li> The rate is how big of changes the network will make to lower its costs. If it is too low the network will learn slowly, and if it is too high the network will just jump around randomly without making any notable progress. The rate is recommended to be around 0.0005 to 0.001. 
+        //! <li> Food is the dataset that will be used to train the network.
+        //! <li> The rate is how big of changes the network will make to lower its costs. If it is too low the network will learn slowly, and if it is too high the network will just jump around randomly without making any notable progress. The rate is recommended to be around 0.0005 to 0.001.
         //! <li> The used data fraction is the amount of data to be used each iteration (so 0.3 will mean 30% of the data will be used every iteration). A higher value would make the network more consistantly lower its cost, and a lower value would make the network learn faster and avoid potential settle-points.
         //! <li> Iterations is the amount of times to run through the dataset to train the network.
         //! <li> Iterations per cost print is the amount of iterations for each print to the console. If it is None, then nothing will be printed. If it is Some(10), then the cost vector will be printed every 10 generations.

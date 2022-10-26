@@ -1,7 +1,7 @@
 use neurnet::*;
 
 fn main() {
-    let mut nn = Network::new(
+    /*let mut nn = Network::new(
         vec![1, 5, 4, 5, 4, 6, 2],
         |x| if x > 0.0 { x } else { 0.01 * x },
         (-2.0, 2.0),
@@ -26,5 +26,14 @@ fn main() {
     let lnn = Network::load("test1.neur", |x| if x > 0.0 { x } else { 0.01 * x }).unwrap();
     for i in -100..=100 {
         println!("({}, {:?})", i, lnn.pulse(vec![i as f64]));
-    }
+    }*/
+    let training_inputs: Vec<Vec<f64>> = (-1000..1000).map(|x| vec![(x as f64) / 5.0]).collect();
+    let testing_inputs: Vec<Vec<f64>> = (-100..100).map(|x| vec![x as f64]).collect();
+    let ds = DataSet::gen_from_fn(
+        |x| vec![0.5 * x[0], 2.0 * x[0]],
+        training_inputs,
+        testing_inputs,
+    );
+    ds.save(&"idk.dset").unwrap();
+    let ds2 = DataSet::load(&"idk.dset");
 }
