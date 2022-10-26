@@ -39,6 +39,13 @@ impl DataSet {
         }
     }
     pub fn save(&self, path: &str) -> Option<()> {
+        /*!
+        Saves a dataset to the path, return None if it was not sucessful,
+        ```
+        let ds = DataSet::empty();
+        ds.save("dataset.dset").unwrap();
+        ```
+         */
         let training_count: u32 = self.training_data.len() as u32;
         let testing_count: u32 = self.testing_data.len() as u32;
 
@@ -55,6 +62,14 @@ impl DataSet {
         Some(())
     }
     pub fn load(path: &str) -> Option<DataSet> {
+        /*!
+        Loads a dataset from the given path, returns Some(DataSet) if sucessful else None.
+        ```
+        let ds = DataSet::empty();
+        ds.save("dataset.dset").unwrap();
+        let ds_loaded = DataSet::load("dataset.dset").unwrap();
+        ```
+         */
         let data = read_dset_file(path)?;
         Some(
             DataSet { training_data: data.0, testing_data: data.1 }
@@ -73,7 +88,18 @@ impl DataSet {
         training_points: Vec<Vec<f64>>,
         testing_points: Vec<Vec<f64>>,
     ) -> DataSet {
-        //! Takes the input half of the training/testing points and a closure that is used to generate the expected outputs for all of the inputs supplied.
+        /*!
+        Takes the input half of the training/testing points and a closure that is used to generate the expected outputs for all of the inputs supplied.
+        ```
+        let training_inputs: Vec<Vec<f64>> = (-1000..1000).map(|x| vec![(x as f64) / 5.0]).collect();
+        let testing_inputs: Vec<Vec<f64>> = (-100..100).map(|x| vec![x as f64]).collect();
+        let ds = DataSet::gen_from_fn(
+            |x| vec![0.5 * x[0], 2.0 * x[0]],
+            training_inputs,
+            testing_inputs,
+        );
+        ```
+        */
         let training_data = {
             let mut buf: Vec<(Vec<f64>, Vec<f64>)> = vec![];
             for x in training_points {

@@ -34,6 +34,6 @@ fn main() {
         training_inputs,
         testing_inputs,
     );
-    ds.save(&"idk.dset").unwrap();
-    let ds2 = DataSet::load(&"idk.dset");
+    ds.save("idk.dset").unwrap();
+    let ds2 = DataSet::load("idk.dset");
 }
